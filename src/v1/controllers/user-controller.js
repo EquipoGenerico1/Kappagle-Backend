@@ -1,5 +1,6 @@
 //Imports
 const moment = require('moment')
+const uniqid = require('uniqid')
 const user = require('../models/user-model')
 const authJWT = require('../helpers/jwt')
 
@@ -7,13 +8,16 @@ const authJWT = require('../helpers/jwt')
  * POST     /api/login              -> login
  * POST     /api/signup             -> signup
  * POST     /api/refresh-token      -> refreshToken
+ * POST     /api/users/:id/checkin  -> users/:id/checkin
+ * POST     /api/users/:id/checkout -> users/:id/checkout
  */
 
 module.exports = {
     login,
     signup,
     refreshToken,
-    checkin
+    checkin,
+    checkout
 }
 
 const _UPDATE_DEFAULT_CONFIG = {
@@ -97,20 +101,41 @@ function refreshToken(req, res) {
 function checkin(req, res) {
     // Save new check
 
-    let timeStamp = moment().toObject();
+    const timeStamp = moment().toObject();
+    const id = uniqid();
 
     let check = {
         date: timeStamp.date + '/' + timeStamp.months + '/' + timeStamp.years,
         checkIn: timeStamp.hours + ':' + timeStamp.minutes,
-        checkOut: ''
+        checkOut: '',
+        _id: id
     }
 
-    user.findByIdAndUpdate({ _id: req.params.id }, { $push: { checks: check } }, { new: true })
+    user.findByIdAndUpdate(req.params.id, { $push: { checks: check } }, { new: true })
     .then(user => {
-        return res.status(201).json({ check: user.checks[user.checks.length - 1], arrayIndex: user.checks.indexOf(user.checks[user.checks.length - 1]) })
+        return res.status(201).json({ check })
     })
     .catch(err=>{
-        return res.status(404).json({ message: 'El usuario no fue encontrado', error: err })
+        return res.status(404).json({ message: 'Users was not found', error: err })
+    })
+
+}
+
+function checkout(req, res) {
+
+    const timeStamp = moment().toObject();
+    let checkOut = timeStamp.hours + ':' + timeStamp.minutes;
+
+    user.findOneAndUpdate({ _id: req.params.id, "checks._id": req.body.checkId }, { $set: {"checks.$.checkOut": checkOut }}, { new: true })
+    .then(resultUser => {
+
+        let resultCheck = resultUser.checks.find(check => check._id == req.body.checkId )
+
+        return res.json(resultCheck)
+
+    })
+    .catch(err=>{
+        return res.status(404).json({ message: 'Users was not found', error: err })
     })
 
 }
