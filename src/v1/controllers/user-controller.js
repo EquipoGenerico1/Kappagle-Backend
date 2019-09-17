@@ -144,12 +144,11 @@ function checkOut(req, res) {
     const timeStamp = moment().utc().toObject();
     let checkOut = timeStamp.hours + ':' + timeStamp.minutes;
 
-    user.findOneAndUpdate({ _id: loggedUser._id, "checks._id": req.params.id, 'checks.checkOut':'' }, { $set: { "checks.$.checkOut": checkOut } }, { new: true })
+    user.findOneAndUpdate({ _id: loggedUser._id, "checks._id": req.params.id, 'checks.checkOut': '' }, { $set: { "checks.$.checkOut": checkOut } }, { new: true })
         .then(resultUser => {
-
+            
             let resultCheck = resultUser.checks.find(check => check._id == req.params.id)
             return res.json(resultCheck)
-
         })
         .catch(err => {
             return res.status(404).json({ message: 'Users was not found', error: err })
@@ -177,7 +176,6 @@ function checkModify(req, res) {
         .then(resultUser => {
 
             let resultCheck = resultUser.checks.find(check => check._id == req.body.checkId)
-
             return res.json(resultCheck)
         })
         .catch(err => {
@@ -194,11 +192,10 @@ function checkAll(req, res) {
 
     let loggedUser = req.user
 
-    user.findById(loggedUser._id)
+    user.findById(loggedUser._id, { 'checks': 1 })
         .then(resultUser => {
 
-            return res.json(resultUser.checks.reverse())
-
+            return res.json(resultUser.reverse())
         })
         .catch(err=>{
             return res.status(404).json({ message: 'Users was not found', error: err })
@@ -212,7 +209,7 @@ function checkAll(req, res) {
  */
 function userAll(req, res) {
 
-    user.find({},{'name':1})
+    user.find({ }, { 'name': 1 })
         .then(resultUsers => {
             return res.json(resultUsers)
         })
