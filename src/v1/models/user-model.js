@@ -33,7 +33,8 @@ const UserSchema = mongoose.Schema({
     },
     checks: {
         type: Array,
-        required: false
+        required: false,
+        default: []
     }
 })
 
