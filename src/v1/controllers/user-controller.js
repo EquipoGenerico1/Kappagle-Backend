@@ -44,7 +44,7 @@ function login(req, res) {
         user.findOne({
             email: req.body.email
         })
-            .select("_id password")
+            .select("_id password role")
             .exec((err, userResult) => {
                 if (err || !userResult) {
                     return res.status(401).send({ error: "User does not exist" });
@@ -52,7 +52,6 @@ function login(req, res) {
 
                 userResult.comparePassword(req.body.password, userResult.password, function (err, isMatch) {
                     if (isMatch & !err) {
-
                         let dataToken = authJWT.createToken(userResult);
                         return res.status(200).send({
                             access_token: dataToken[0],
@@ -164,7 +163,7 @@ function checkOut(req, res) {
  * @param {*} res Response
  */
 function checkModify(req, res) {
-    
+
     user.findOneAndUpdate({ _id: req.params.user, "checks._id": req.params.check },
         {
             $set: {
@@ -235,3 +234,4 @@ function getUser(req, res) {
             return res.status(404).json({ message: 'User was not found', error: err })
         })
 }
+
