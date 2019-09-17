@@ -6,6 +6,7 @@ router.post('/login', userController.login)
 router.post('/signup', userController.signup)
 router.post('/refresh-token', userController.refreshToken)
 
+router.get('/users/:id', auth.authAdmin, userController.getUser)
 router.get('/users', auth.authAdmin, userController.userAll)
 router.get('/users/checks', auth.authUser, userController.checkAll)
 router.post('/users/checks/checkin', auth.authUser, userController.checkIn)

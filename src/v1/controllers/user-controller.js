@@ -9,6 +9,7 @@ const authJWT = require('../helpers/jwt')
  * POST     /api/signup                 -> signup
  * POST     /api/refresh-token          -> refreshToken
  * 
+ * GET      /users:id                   -> getUser
  * GET      /users                      -> userAll
  * GET      /users/checks               -> checkAll
  * POST     /users/checks/checkin       -> checkIn
@@ -20,6 +21,7 @@ module.exports = {
     login,
     signup,
     refreshToken,
+    getUser,
     userAll,
     checkAll,
     checkIn,
@@ -215,5 +217,21 @@ function userAll(req, res) {
         })
         .catch(err=>{
             return res.status(404).json({ message: 'Users not found', error: err })
+        })
+}
+
+/**
+ * Get users list for ID
+ * @param {request} req Request
+ * @param {*} res Response
+ */
+function getUser(req, res) {
+
+    user.findById(req.params.id)
+        .then(resultUser => {
+            return res.json(resultUser)
+        })
+        .catch(err=>{
+            return res.status(404).json({ message: 'User was not found', error: err })
         })
 }
