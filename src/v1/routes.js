@@ -6,6 +6,8 @@ router.post('/login', userController.login)
 router.post('/signup', userController.signup)
 router.post('/refresh-token', userController.refreshToken)
 
+router.get('/users/:id/checkAll', userController.checkAll)
+
 router.post('/users/:id/checkin', userController.checkin)
 router.post('/users/:id/checkout', userController.checkout)
 

@@ -18,7 +18,8 @@ module.exports = {
     refreshToken,
     checkin,
     checkout,
-    checkModify
+    checkModify,
+    checkAll
 }
 
 const _UPDATE_DEFAULT_CONFIG = {
@@ -158,6 +159,20 @@ function checkModify(req, res) {
         let resultCheck = resultUser.checks.find(check => check._id == req.body.checkId )
 
         return res.json(resultCheck)
+
+    })
+    .catch(err=>{
+        return res.status(404).json({ message: 'Users was not found', error: err })
+    })
+
+}
+
+function checkAll(req, res) {
+
+    user.findById(req.params.id)
+    .then(resultUser => {
+
+        return res.json(resultUser.checks.reverse())
 
     })
     .catch(err=>{
