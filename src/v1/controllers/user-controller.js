@@ -5,21 +5,24 @@ const user = require('../models/user-model')
 const authJWT = require('../helpers/jwt')
 
 /**
- * POST     /api/login              -> login
- * POST     /api/signup             -> signup
- * POST     /api/refresh-token      -> refreshToken
- * POST     /api/users/:id/checkin  -> users/:id/checkin
- * POST     /api/users/:id/checkout -> users/:id/checkout
+ * POST     /api/login                  -> login
+ * POST     /api/signup                 -> signup
+ * POST     /api/refresh-token          -> refreshToken
+ * 
+ * GET      /users/checks               -> checkAll
+ * POST     /users/checks/checkin       -> checkIn
+ * PATCH    /users/checks/:id/checkout  -> checkOut
+ * PATCH    /users/:user/checks/:check  -> checkModify
  */
 
 module.exports = {
     login,
     signup,
     refreshToken,
+    checkAll,
     checkIn,
     checkOut,
     checkModify,
-    checkAll
 }
 
 const _UPDATE_DEFAULT_CONFIG = {
@@ -71,7 +74,7 @@ function login(req, res) {
  * @param {*} res Response
  */
 function signup(req, res) {
-    // Save new user
+
     user.create(req.body)
         .then(user => {
             console.log(user);
@@ -106,8 +109,7 @@ function refreshToken(req, res) {
  * @param {*} res Response
  */
 function checkIn(req, res) {
-
-    let loggedUser = req.user
+    let loggedUser = req.user;
 
     const timeStamp = moment().utc().toObject();
     const uid = uniqid();
@@ -129,8 +131,13 @@ function checkIn(req, res) {
 
 }
 
+/**
+ * Update field checkout in check
+ * @param {request} req Request
+ * @param {*} res Response
+ */
 function checkOut(req, res) {
-    let loggedUser = req.user
+    const loggedUser = req.user
 
     const timeStamp = moment().utc().toObject();
     let checkOut = timeStamp.hours + ':' + timeStamp.minutes;
@@ -139,7 +146,6 @@ function checkOut(req, res) {
         .then(resultUser => {
 
             let resultCheck = resultUser.checks.find(check => check._id == req.params.id)
-
             return res.json(resultCheck)
 
         })
@@ -149,6 +155,11 @@ function checkOut(req, res) {
 
 }
 
+/**
+ * Update fields the check list
+ * @param {request} req Request
+ * @param {*} res Response
+ */
 function checkModify(req, res) {
     
     user.findOneAndUpdate({ _id: req.params.user, "checks._id": req.params.check },
@@ -172,17 +183,22 @@ function checkModify(req, res) {
         })
 }
 
+/**
+ * Get all checks list the user
+ * @param {request} req Request
+ * @param {*} res Response
+ */
 function checkAll(req, res) {
 
     let loggedUser = req.user
 
     user.findById(loggedUser._id)
-    .then(resultUser => {
+        .then(resultUser => {
 
-        return res.json(resultUser.checks.reverse())
+            return res.json(resultUser.checks.reverse())
 
-    })
-    .catch(err=>{
-        return res.status(404).json({ message: 'Users was not found', error: err })
-    })
+        })
+        .catch(err=>{
+            return res.status(404).json({ message: 'Users was not found', error: err })
+        })
 }
