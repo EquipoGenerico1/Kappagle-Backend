@@ -17,8 +17,7 @@ passport.use('user', new JwtStrategy({
 }, async (payload, done) => {
     try {
         const user = await User.findOne({
-            _id: payload.id,
-            role: "ROLE_USER"
+            _id: payload.id
         })
 
         if (!user) {
