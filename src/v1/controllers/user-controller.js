@@ -1,6 +1,4 @@
 //Imports
-const moment = require('moment')
-const uniqid = require('uniqid')
 const user = require('../models/user-model')
 const authJWT = require('../helpers/jwt')
 
@@ -8,18 +6,12 @@ const authJWT = require('../helpers/jwt')
  * POST     /api/login              -> login
  * POST     /api/signup             -> signup
  * POST     /api/refresh-token      -> refreshToken
- * POST     /api/users/:id/checkin  -> users/:id/checkin
- * POST     /api/users/:id/checkout -> users/:id/checkout
  */
 
 module.exports = {
     login,
     signup,
-    refreshToken,
-    checkin,
-    checkout,
-    checkModify,
-    checkAll
+    refreshToken
 }
 
 /**
@@ -93,85 +85,4 @@ function signup(req, res) {
  */
 function refreshToken(req, res) {
     authJWT.refreshToken(req, res);
-}
-
-function checkin(req, res) {
-    // Save new check
-
-    const timeStamp = moment().toObject();
-    const id = uniqid();
-
-    let check = {
-        date: timeStamp.date + '/' + timeStamp.months + '/' + timeStamp.years,
-        checkIn: timeStamp.hours + ':' + timeStamp.minutes,
-        checkOut: '',
-        _id: id
-    }
-
-    user.findByIdAndUpdate(req.params.id, { $push: { checks: check } }, { new: true })
-    .then(user => {
-        return res.status(201).json({ check })
-    })
-    .catch(err=>{
-        return res.status(404).json({ message: 'Users was not found', error: err })
-    })
-
-}
-
-function checkout(req, res) {
-
-    const timeStamp = moment().toObject();
-    let checkOut = timeStamp.hours + ':' + timeStamp.minutes;
-
-    user.findOneAndUpdate({ _id: req.params.id, "checks._id": req.body.checkId }, { $set: {"checks.$.checkOut": checkOut }}, { new: true })
-    .then(resultUser => {
-
-        let resultCheck = resultUser.checks.find(check => check._id == req.body.checkId )
-
-        return res.json(resultCheck)
-
-    })
-    .catch(err=>{
-        return res.status(404).json({ message: 'Users was not found', error: err })
-    })
-
-}
-
-function checkModify(req, res) {
-
-    user.findOneAndUpdate({ _id: req.body.userId , "checks._id": req.body.checkId }, 
-    { 
-        $set: {
-        "checks.$.checkIn": req.body.checkIn, 
-        "checks.$.checkOut": req.body.checkOut 
-        }
-    }, 
-    {
-        new: true 
-    })
-    .then(resultUser => {
-
-        let resultCheck = resultUser.checks.find(check => check._id == req.body.checkId )
-
-        return res.json(resultCheck)
-
-    })
-    .catch(err=>{
-        return res.status(404).json({ message: 'Users was not found', error: err })
-    })
-
-}
-
-function checkAll(req, res) {
-
-    user.findById(req.params.id)
-    .then(resultUser => {
-
-        return res.json(resultUser.checks.reverse())
-
-    })
-    .catch(err=>{
-        return res.status(404).json({ message: 'Users was not found', error: err })
-    })
-
 }
