@@ -37,7 +37,7 @@ function login(req, res) {
         user.findOne({
             email: req.body.email
         })
-            .select("_id password")
+            .select("_id password role")
             .exec((err, userResult) => {
                 if (err || !userResult) {
                     return res.status(401).send({ error: "User does not exist" });
@@ -45,7 +45,6 @@ function login(req, res) {
 
                 userResult.comparePassword(req.body.password, userResult.password, function (err, isMatch) {
                     if (isMatch & !err) {
-
                         let dataToken = authJWT.createToken(userResult);
                         return res.status(200).send({
                             access_token: dataToken[0],
@@ -135,7 +134,7 @@ function checkOut(req, res) {
     const timeStamp = moment().utc().toObject();
     let checkOut = timeStamp.hours + ':' + timeStamp.minutes;
 
-    user.findOneAndUpdate({ _id: loggedUser._id, "checks._id": req.params.id, 'checks.checkOut':'' }, { $set: { "checks.$.checkOut": checkOut } }, { new: true })
+    user.findOneAndUpdate({ _id: loggedUser._id, "checks._id": req.params.id, 'checks.checkOut': '' }, { $set: { "checks.$.checkOut": checkOut } }, { new: true })
         .then(resultUser => {
 
             let resultCheck = resultUser.checks.find(check => check._id == req.params.id)
@@ -150,7 +149,7 @@ function checkOut(req, res) {
 }
 
 function checkModify(req, res) {
-    
+
     user.findOneAndUpdate({ _id: req.params.user, "checks._id": req.params.check },
         {
             $set: {
@@ -177,12 +176,12 @@ function checkAll(req, res) {
     let loggedUser = req.user
 
     user.findById(loggedUser._id)
-    .then(resultUser => {
+        .then(resultUser => {
 
-        return res.json(resultUser.checks.reverse())
+            return res.json(resultUser.checks.reverse())
 
-    })
-    .catch(err=>{
-        return res.status(404).json({ message: 'Users was not found', error: err })
-    })
+        })
+        .catch(err => {
+            return res.status(404).json({ message: 'Users was not found', error: err })
+        })
 }
