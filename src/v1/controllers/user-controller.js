@@ -197,7 +197,7 @@ function checkAll(req, res) {
     user.findById(loggedUser._id, { 'checks': 1 })
         .then(resultUser => {
 
-            return res.json(resultUser.reverse())
+            return res.json(resultUser.checks.reverse())
         })
         .catch(err=>{
             return res.status(404).json({ message: 'Users was not found', error: err })
