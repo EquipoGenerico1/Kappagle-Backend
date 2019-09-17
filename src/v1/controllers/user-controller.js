@@ -1,4 +1,5 @@
 //Imports
+const moment = require('moment')
 const user = require('../models/user-model')
 const authJWT = require('../helpers/jwt')
 
@@ -11,7 +12,8 @@ const authJWT = require('../helpers/jwt')
 module.exports = {
     login,
     signup,
-    refreshToken
+    refreshToken,
+    checkin
 }
 
 const _UPDATE_DEFAULT_CONFIG = {
@@ -90,4 +92,25 @@ function signup(req, res) {
  */
 function refreshToken(req, res) {
     authJWT.refreshToken(req, res);
+}
+
+function checkin(req, res) {
+    // Save new check
+
+    let timeStamp = moment().toObject();
+
+    let check = {
+        date: timeStamp.date + '/' + timeStamp.months + '/' + timeStamp.years,
+        checkIn: timeStamp.hours + ':' + timeStamp.minutes,
+        checkOut: ''
+    }
+
+    user.findByIdAndUpdate({ _id: req.params.id }, { $push: { checks: check } }, { new: true })
+    .then(user => {
+        return res.status(201).json({ check: user.checks[user.checks.length - 1], arrayIndex: user.checks.indexOf(user.checks[user.checks.length - 1]) })
+    })
+    .catch(err=>{
+        return res.status(404).json({ message: 'El usuario no fue encontrado', error: err })
+    })
+
 }
