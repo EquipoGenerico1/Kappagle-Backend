@@ -16,9 +16,10 @@ module.exports = {
     login,
     signup,
     refreshToken,
-    checkin,
-    checkout,
-    checkModify
+    checkIn,
+    checkOut,
+    checkModify,
+    checkAll
 }
 
 const _UPDATE_DEFAULT_CONFIG = {
@@ -104,7 +105,7 @@ function refreshToken(req, res) {
  * @param {request} req Request
  * @param {*} res Response
  */
-function checkin(req, res) {
+function checkIn(req, res) {
 
     let loggedUser = req.user
 
@@ -128,16 +129,16 @@ function checkin(req, res) {
 
 }
 
-function checkout(req, res) {
+function checkOut(req, res) {
     let loggedUser = req.user
 
     const timeStamp = moment().utc().toObject();
     let checkOut = timeStamp.hours + ':' + timeStamp.minutes;
 
-    user.findOneAndUpdate({ _id: loggedUser._id, "checks._id": req.body.checkId }, { $set: { "checks.$.checkOut": checkOut } }, { new: true })
+    user.findOneAndUpdate({ _id: loggedUser._id, "checks._id": req.params.id, 'checks.checkOut':'' }, { $set: { "checks.$.checkOut": checkOut } }, { new: true })
         .then(resultUser => {
 
-            let resultCheck = resultUser.checks.find(check => check._id == req.body.checkId)
+            let resultCheck = resultUser.checks.find(check => check._id == req.params.id)
 
             return res.json(resultCheck)
 
@@ -149,7 +150,8 @@ function checkout(req, res) {
 }
 
 function checkModify(req, res) {
-    user.findOneAndUpdate({ _id: req.body.userId, "checks._id": req.body.checkId },
+    
+    user.findOneAndUpdate({ _id: req.params.user, "checks._id": req.params.check },
         {
             $set: {
                 "checks.$.checkIn": req.body.checkIn,
@@ -164,9 +166,23 @@ function checkModify(req, res) {
             let resultCheck = resultUser.checks.find(check => check._id == req.body.checkId)
 
             return res.json(resultCheck)
-
         })
         .catch(err => {
             return res.status(404).json({ message: 'Users was not found', error: err })
         })
+}
+
+function checkAll(req, res) {
+
+    let loggedUser = req.user
+
+    user.findById(loggedUser._id)
+    .then(resultUser => {
+
+        return res.json(resultUser.checks.reverse())
+
+    })
+    .catch(err=>{
+        return res.status(404).json({ message: 'Users was not found', error: err })
+    })
 }
