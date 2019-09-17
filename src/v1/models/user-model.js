@@ -30,6 +30,11 @@ const UserSchema = mongoose.Schema({
             "ROLE_ASSOCIATE"
         ],
         required: true
+    },
+    checks: {
+        type: Array,
+        required: false,
+        default: []
     }
 })
 
