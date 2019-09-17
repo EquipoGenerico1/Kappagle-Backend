@@ -45,7 +45,6 @@ function login(req, res) {
 
                 userResult.comparePassword(req.body.password, userResult.password, function (err, isMatch) {
                     if (isMatch & !err) {
-                        console.log(userResult);
                         let dataToken = authJWT.createToken(userResult);
                         return res.status(200).send({
                             access_token: dataToken[0],
