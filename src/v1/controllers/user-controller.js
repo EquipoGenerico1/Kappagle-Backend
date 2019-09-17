@@ -17,7 +17,8 @@ module.exports = {
     signup,
     refreshToken,
     checkin,
-    checkout
+    checkout,
+    checkModify
 }
 
 const _UPDATE_DEFAULT_CONFIG = {
@@ -127,6 +128,31 @@ function checkout(req, res) {
     let checkOut = timeStamp.hours + ':' + timeStamp.minutes;
 
     user.findOneAndUpdate({ _id: req.params.id, "checks._id": req.body.checkId }, { $set: {"checks.$.checkOut": checkOut }}, { new: true })
+    .then(resultUser => {
+
+        let resultCheck = resultUser.checks.find(check => check._id == req.body.checkId )
+
+        return res.json(resultCheck)
+
+    })
+    .catch(err=>{
+        return res.status(404).json({ message: 'Users was not found', error: err })
+    })
+
+}
+
+function checkModify(req, res) {
+
+    user.findOneAndUpdate({ _id: req.body.userId , "checks._id": req.body.checkId }, 
+    { 
+        $set: {
+        "checks.$.checkIn": req.body.checkIn, 
+        "checks.$.checkOut": req.body.checkOut 
+        }
+    }, 
+    {
+        new: true 
+    })
     .then(resultUser => {
 
         let resultCheck = resultUser.checks.find(check => check._id == req.body.checkId )
