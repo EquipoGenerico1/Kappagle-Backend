@@ -14,11 +14,6 @@ module.exports = {
     refreshToken
 }
 
-const _UPDATE_DEFAULT_CONFIG = {
-    new: true,
-    runValidators: true
-}
-
 /**
  * Authenticates a user and returns JWT
  * @param {request} req Request
