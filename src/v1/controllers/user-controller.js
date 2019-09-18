@@ -54,7 +54,7 @@ function login(req, res) {
                     if (isMatch & !err) {
 
                         let dataToken = authJWT.createToken(userResult);
-                        return res.status(200).send({
+                        return res.status(200).json({
                             access_token: dataToken[0],
                             refresh_token: authJWT.createRefreshToken(userResult),
                             expires_in: dataToken[1],
@@ -88,10 +88,11 @@ function signup(req, res) {
                 expires_in: dataToken[1],
                 role: user.role
             };
-            return res.status(200).send(userResponse);
+            return res.status(201).json(userResponse);
 
         })
         .catch(err => {
+            console.log(err)
             return res.status(400).send(err);
         });
 }
@@ -128,6 +129,7 @@ function checkIn(req, res) {
             return res.status(201).json(user.checks.filter(check => check._id == uid))
         })
         .catch(err => {
+            console.log(err)
             return res.status(404).json({ message: 'Users was not found', error: err })
         })
 
@@ -151,6 +153,7 @@ function checkOut(req, res) {
             return res.json(resultCheck)
         })
         .catch(err => {
+            console.log(err)
             return res.status(404).json({ message: 'Users was not found', error: err })
         })
 
@@ -179,6 +182,7 @@ function checkModify(req, res) {
             return res.json(resultCheck)
         })
         .catch(err => {
+            console.log(err)
             return res.status(404).json({ message: 'Users was not found', error: err })
         })
 }
@@ -198,6 +202,7 @@ function checkAll(req, res) {
             return res.json(resultUser.checks.reverse())
         })
         .catch(err=>{
+            console.log(err)
             return res.status(404).json({ message: 'Users was not found', error: err })
         })
 }
@@ -214,6 +219,7 @@ function userAll(req, res) {
             return res.json(resultUsers)
         })
         .catch(err=>{
+            console.log(err)
             return res.status(404).json({ message: 'Users not found', error: err })
         })
 }
@@ -230,6 +236,7 @@ function getUser(req, res) {
             return res.json(resultUser)
         })
         .catch(err=>{
+            console.log(err)
             return res.status(404).json({ message: 'User was not found', error: err })
         })
 }
