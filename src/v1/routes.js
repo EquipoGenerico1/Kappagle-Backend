@@ -6,11 +6,9 @@ router.post('/login', userController.login)
 router.post('/signup', userController.signup)
 router.post('/refresh-token', userController.refreshToken)
 
-router.get('/users/:id/checkAll', userController.checkAll)
-
-router.post('/users/:id/checkin', userController.checkin)
-router.post('/users/:id/checkout', userController.checkout)
-
-router.patch('/users/checkModify', auth.authAdmin, userController.checkModify)
+router.get('/users/checks', auth.authUser, userController.checkAll)
+router.post('/users/checks/checkin', auth.authUser, userController.checkIn)
+router.patch('/users/checks/:id/checkout', auth.authUser, userController.checkOut)
+router.patch('/users/:user/checks/:check', auth.authAdmin, userController.checkModify)
 
 module.exports = router
