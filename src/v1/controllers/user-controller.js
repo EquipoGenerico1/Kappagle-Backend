@@ -81,7 +81,6 @@ function signup(req, res) {
 
     user.create(req.body)
         .then(user => {
-            console.log(user);
             let dataToken = authJWT.createToken(user);
             let userResponse = {
                 access_token: dataToken[0],
@@ -93,7 +92,6 @@ function signup(req, res) {
 
         })
         .catch(err => {
-            console.log(err);
             return res.status(400).send(err);
         });
 }
@@ -177,7 +175,7 @@ function checkModify(req, res) {
         })
         .then(resultUser => {
 
-            let resultCheck = resultUser.checks.find(check => check._id == req.body.checkId)
+            let resultCheck = resultUser.checks.find(check => check._id == req.params.check)
             return res.json(resultCheck)
         })
         .catch(err => {
