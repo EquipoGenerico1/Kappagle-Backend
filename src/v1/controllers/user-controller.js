@@ -113,14 +113,11 @@ function refreshToken(req, res) {
  */
 function checkIn(req, res) {
     let loggedUser = req.user;
-
-    const timeStamp = moment().utc().toObject();
     const uid = uniqid();
 
     let check = {
-        date: timeStamp.date + '/' + timeStamp.months + '/' + timeStamp.years,
-        checkIn: timeStamp.hours + ':' + timeStamp.minutes,
-        checkOut: '',
+        checkIn: moment().utc(),
+        checkOut: null,
         _id: uid
     }
 
@@ -131,7 +128,6 @@ function checkIn(req, res) {
         .catch(err => {
             return res.status(404).json({ message: 'Users was not found', error: err })
         })
-
 }
 
 /**
@@ -142,12 +138,11 @@ function checkIn(req, res) {
 function checkOut(req, res) {
     const loggedUser = req.user
 
-    const timeStamp = moment().utc().toObject();
-    let checkOut = timeStamp.hours + ':' + timeStamp.minutes;
+    let checkOut = moment().utc();
 
-    user.findOneAndUpdate({ _id: loggedUser._id, "checks._id": req.params.id, 'checks.checkOut': '' }, { $set: { "checks.$.checkOut": checkOut } }, { new: true })
+    user.findOneAndUpdate({ _id: loggedUser._id, "checks._id": req.params.id, 'checks.checkOut': null }, { $set: { "checks.$.checkOut": checkOut } }, { new: true })
         .then(resultUser => {
-            
+
             let resultCheck = resultUser.checks.find(check => check._id == req.params.id)
             return res.json(resultCheck)
         })
@@ -198,7 +193,7 @@ function checkAll(req, res) {
 
             return res.json(resultUser.checks.reverse())
         })
-        .catch(err=>{
+        .catch(err => {
             return res.status(404).json({ message: 'Users was not found', error: err })
         })
 }
@@ -210,11 +205,11 @@ function checkAll(req, res) {
  */
 function userAll(req, res) {
 
-    user.find({ }, { 'name': 1 })
+    user.find({}, { 'name': 1 })
         .then(resultUsers => {
             return res.json(resultUsers)
         })
-        .catch(err=>{
+        .catch(err => {
             return res.status(404).json({ message: 'Users not found', error: err })
         })
 }
@@ -230,7 +225,7 @@ function getUser(req, res) {
         .then(resultUser => {
             return res.json(resultUser)
         })
-        .catch(err=>{
+        .catch(err => {
             return res.status(404).json({ message: 'User was not found', error: err })
         })
 }
