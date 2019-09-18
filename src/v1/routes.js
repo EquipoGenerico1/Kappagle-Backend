@@ -11,4 +11,7 @@ router.post('/users/checks/checkin', auth.authUser, userController.checkIn)
 router.patch('/users/checks/:id/checkout', auth.authUser, userController.checkOut)
 router.patch('/users/:user/checks/:check', auth.authAdmin, userController.checkModify)
 
+router.get('/users/:id', auth.authAdmin, userController.getUser)
+router.get('/users', auth.authAdmin, userController.userAll)
+
 module.exports = router
