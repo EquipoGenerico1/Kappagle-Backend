@@ -6,7 +6,9 @@ const dotenv = require('dotenv');
 dotenv.config();
 const routerv1 = require('./src/v1/routes');
 const mongoose = require('mongoose');
+const cors = require('cors');
 
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded());
 app.use('/api/v1', routerv1);
