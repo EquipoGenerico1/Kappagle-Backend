@@ -12,6 +12,8 @@ const authJWT = require('../helpers/jwt')
  * GET      /users:id                   -> getUser
  * GET      /users                      -> userAll
  * GET      /users/checks               -> checkAll
+ * GET      /users/getWorkedHours       -> getWorkedHours
+ * 
  * POST     /users/checks/checkin       -> checkIn
  * PATCH    /users/checks/:id/checkout  -> checkOut
  * PATCH    /users/:user/checks/:check  -> checkModify
@@ -27,6 +29,7 @@ module.exports = {
     checkIn,
     checkOut,
     checkModify,
+    getWorkedHours
 }
 
 const _UPDATE_DEFAULT_CONFIG = {
@@ -115,7 +118,7 @@ function checkIn(req, res) {
     const uid = uniqid();
 
     let check = {
-        checkIn: moment().utc(),
+        checkIn: moment().unix(),
         checkOut: null,
         _id: uid
     }
@@ -138,7 +141,7 @@ function checkIn(req, res) {
 function checkOut(req, res) {
     const loggedUser = req.user
 
-    let checkOut = moment().utc();
+    let checkOut = moment().unix();
 
     user.findOneAndUpdate({ _id: loggedUser._id, "checks._id": req.params.id, 'checks.checkOut': null }, { $set: { "checks.$.checkOut": checkOut } }, { new: true })
         .then(resultUser => {
@@ -235,3 +238,43 @@ function getUser(req, res) {
         })
 }
 
+function getChecksByRange(from, to, loggedUser) {
+    from = moment(from, "DD-MM-YYYY").unix();
+    to = moment(to, "DD-MM-YYYY").unix();
+
+    return new Promise((resolve, reject) => {
+        user.findById(loggedUser._id, {}, { new: true })
+            .then(user => {
+                var checks = user.checks.filter(
+                    check => {
+                        return check.checkIn >= from
+                            && check.checkIn <= to;
+                    })
+                resolve(checks);
+            })
+            .catch(err => {
+                res.status(404).json({ message: 'User was not found', error: err });
+                reject();
+            })
+
+    });
+}
+
+/**
+ * Get users list for ID
+ * @param {request} req Request
+ * @param {*} res Response
+ */
+async function getWorkedHours(req, res) {
+    if (req.query.from && req.query.to) {
+        var checks = await getChecksByRange(req.query.from, req.query.to, req.user);
+        if (checks) {
+            var seconds = 0;
+            checks.forEach(check => { seconds += check.checkOut - check.checkIn; });
+            var hours = seconds / 3600
+            return res.status(201).json({ hours });
+        }
+    } else {
+        return res.status(401).send({ error: "BadRequest" });
+    }
+}
