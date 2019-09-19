@@ -261,7 +261,7 @@ function getChecksByRange(from, to, loggedUser) {
 }
 
 /**
- * Get users list for ID
+ * Get user worked hours in a range of time between from and to
  * @param {request} req Request
  * @param {*} res Response
  */
