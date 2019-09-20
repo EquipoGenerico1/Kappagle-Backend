@@ -111,48 +111,75 @@ async function refreshToken(req, res) {
 }
 
 /**
- * Make a new check-in
+ * Initializes currentCheck with a new check in & unique id
  * @param {request} req Request
  * @param {*} res Response
  */
 async function checkIn(req, res) {
     let loggedUser = req.user;
-    const uid = uniqid();
 
-    let check = {
-        checkIn: moment().utc().unix(),
-        checkOut: null,
-        _id: uid
-    }
-
-    user.findByIdAndUpdate(loggedUser._id, { $push: { checks: check } }, { new: true })
+    user.findById(loggedUser._id, {}, { new: true })
         .then(user => {
-            return res.status(201).json(user.checks.filter(check => check._id == uid))
+            if (!user.currentCheck) {
+
+                user.currentCheck = {
+                    checkIn: moment().utc().unix(),
+                    checkOut: null,
+                    _id: uniqid()
+                };
+
+                user.markModified('currentCheck');
+                user.save(function (err, product) {
+                    if (err) {
+                        return res.status(404).json({ message: 'Check In was not possible', error: err })
+                    } else {
+                        return res.status(201).json(product.currentCheck)
+                    }
+                })
+            } else {
+                return res.status(404).json({ message: 'You have already checked in, please check out first' })
+            }
         })
         .catch(err => {
             console.log(err)
-            return res.status(404).json({ message: 'Users was not found', error: err })
+            return res.status(404).json({ message: 'User was not found', error: err })
         })
 }
 
 /**
- * Update field checkout in check
+ * Creates a new check inside checks composed by the currentCheck fields and updates the checkout field
+ * then sets currentCheck to undefined
  * @param {request} req Request
  * @param {*} res Response
  */
 async function checkOut(req, res) {
     const loggedUser = req.user
 
-    let checkOut = moment().utc().unix();
-
-    user.findOneAndUpdate({ _id: loggedUser._id, "checks._id": req.params.id, 'checks.checkOut': null }, { $set: { "checks.$.checkOut": checkOut } }, { new: true })
-        .then(resultUser => {
-            let resultCheck = resultUser.checks.find(check => check._id == req.params.id)
-            return res.json(resultCheck)
+    user.findById(loggedUser._id, {}, { new: true })
+        .then(user => {
+            if (user.currentCheck) {
+                let completedCheck = {
+                    checkIn: user.currentCheck.checkIn,
+                    checkOut: moment().utc().unix(),
+                    _id: user.currentCheck._id
+                }
+                user.checks.push(completedCheck);
+                user.currentCheck = undefined;
+                user.markModified('currentCheck');
+                user.save(function (err, product) {
+                    if (err) {
+                        return res.status(404).json({ message: 'Check out was not possible', error: err })
+                    } else {
+                        return res.status(201).json(product.checks.filter(check => check._id == completedCheck._id))
+                    }
+                })
+            } else {
+                return res.status(404).json({ message: 'There is no current check yet, please check in first' })
+            }
         })
         .catch(err => {
             console.log(err)
-            return res.status(404).json({ message: 'Users was not found', error: err })
+            return res.status(404).json({ message: 'User was not found', error: err })
         })
 
 }
