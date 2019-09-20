@@ -12,6 +12,9 @@ const authJWT = require('../helpers/jwt')
  * GET      /users:id                   -> getUser
  * GET      /users                      -> userAll
  * GET      /users/checks               -> checkAll
+ * GET      /users/getWorkedHoursUser   -> getWorkedHoursUser
+ * GET      /users/getWorkedHoursAdmin   -> getWorkedHoursAdmin
+ * 
  * POST     /users/checks/checkin       -> checkIn
  * PATCH    /users/checks/:id/checkout  -> checkOut
  * PATCH    /users/:user/checks/:check  -> checkModify
@@ -27,6 +30,9 @@ module.exports = {
     checkIn,
     checkOut,
     checkModify,
+    getWorkedHours,
+    getWorkedHoursUser,
+    getWorkedHoursAdmin
 }
 
 const _UPDATE_DEFAULT_CONFIG = {
@@ -39,7 +45,7 @@ const _UPDATE_DEFAULT_CONFIG = {
  * @param {request} req Request
  * @param {*} res Response
  */
-function login(req, res) {
+async function login(req, res) {
     if (req.body.password && req.body.email) {
         user.findOne({
             email: req.body.email
@@ -76,7 +82,7 @@ function login(req, res) {
  * @param {request} req Request
  * @param {*} res Response
  */
-function signup(req, res) {
+async function signup(req, res) {
 
     user.create(req.body)
         .then(user => {
@@ -101,7 +107,7 @@ function signup(req, res) {
  * @param {request} req Request
  * @param {*} res Response
  */
-function refreshToken(req, res) {
+async function refreshToken(req, res) {
     authJWT.refreshToken(req, res);
 }
 
@@ -110,12 +116,12 @@ function refreshToken(req, res) {
  * @param {request} req Request
  * @param {*} res Response
  */
-function checkIn(req, res) {
+async function checkIn(req, res) {
     let loggedUser = req.user;
     const uid = uniqid();
 
     let check = {
-        checkIn: moment().utc(),
+        checkIn: moment().utc().unix(),
         checkOut: null,
         _id: uid
     }
@@ -135,14 +141,13 @@ function checkIn(req, res) {
  * @param {request} req Request
  * @param {*} res Response
  */
-function checkOut(req, res) {
+async function checkOut(req, res) {
     const loggedUser = req.user
 
-    let checkOut = moment().utc();
+    let checkOut = moment().utc().unix();
 
     user.findOneAndUpdate({ _id: loggedUser._id, "checks._id": req.params.id, 'checks.checkOut': null }, { $set: { "checks.$.checkOut": checkOut } }, { new: true })
         .then(resultUser => {
-
             let resultCheck = resultUser.checks.find(check => check._id == req.params.id)
             return res.json(resultCheck)
         })
@@ -158,7 +163,7 @@ function checkOut(req, res) {
  * @param {request} req Request
  * @param {*} res Response
  */
-function checkModify(req, res) {
+async function checkModify(req, res) {
 
     user.findOneAndUpdate({ _id: req.params.user, "checks._id": req.params.check },
         {
@@ -186,7 +191,7 @@ function checkModify(req, res) {
  * @param {request} req Request
  * @param {*} res Response
  */
-function checkAll(req, res) {
+async function checkAll(req, res) {
 
     let loggedUser = req.user
 
@@ -206,7 +211,7 @@ function checkAll(req, res) {
  * @param {request} req Request
  * @param {*} res Response
  */
-function userAll(req, res) {
+async function userAll(req, res) {
 
     user.find({}, { 'name': 1 })
         .then(resultUsers => {
@@ -223,7 +228,7 @@ function userAll(req, res) {
  * @param {request} req Request
  * @param {*} res Response
  */
-function getUser(req, res) {
+async function getUser(req, res) {
 
     user.findById(req.params.id)
         .then(resultUser => {
@@ -235,3 +240,72 @@ function getUser(req, res) {
         })
 }
 
+async function getChecksByRange(from, to, id) {
+    from = moment(from, "DD-MM-YYYY").utc().unix();
+    to = moment(to, "DD-MM-YYYY").utc().unix();
+
+    return new Promise((resolve, reject) => {
+        user.findById(id, {}, { new: true })
+            .then(user => {
+                var checks = user.checks.filter(
+                    check => {
+                        return check.checkIn >= from
+                            && check.checkIn <= to;
+                    })
+                resolve(checks);
+            })
+            .catch(err => {
+                res.status(404).json({ message: 'User was not found', error: err });
+                reject();
+            })
+
+    });
+}
+
+/**
+ * Get user worked hours in a range of time between from and to
+ * @param {*} from From Date
+ * @param {*} to To Date
+ * @param {*} id User
+ */
+async function getWorkedHours(from, to, id) {
+    if (from && to) {
+        var checks = await getChecksByRange(from, to, id);
+        if (checks) {
+            var seconds = 0;
+            checks.forEach(check => { seconds += check.checkOut - check.checkIn; });
+            var hours = seconds / 3600
+            return hours
+        }
+    } else {
+        return res.status(401).send({ error: "BadRequest" });
+    }
+}
+
+/**
+ * Get user worked hours from logged User
+ * @param {request} req Request
+ * @param {*} res Response
+ */
+async function getWorkedHoursUser(req, res) {
+    if (req.query.from && req.query.to) {
+        let hours = await getWorkedHours(req.query.from, req.query.to, req.user._id);
+        return res.status(201).json({ hours });
+    } else {
+        return res.status(401).send({ error: "BadRequest" });
+    }
+}
+
+/**
+ * Get user worked hours from a provided User
+ * @param {request} req Request
+ * @param {*} res Response
+ */
+async function getWorkedHoursAdmin(req, res) {
+    if (req.query.from && req.query.to) {
+        let hours = await getWorkedHours(req.query.from, req.query.to, req.params.id);
+        return res.status(201).json({ hours });
+    } else {
+        return res.status(401).send({ error: "BadRequest" });
+    }
+}
