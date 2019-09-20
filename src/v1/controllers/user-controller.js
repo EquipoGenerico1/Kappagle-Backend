@@ -30,7 +30,6 @@ module.exports = {
     checkIn,
     checkOut,
     checkModify,
-    getWorkedHours,
     getWorkedHoursUser,
     getWorkedHoursAdmin
 }
