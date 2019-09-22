@@ -31,6 +31,7 @@ const UserSchema = mongoose.Schema({
         ],
         required: true
     },
+    currentCheck: mongoose.Schema.Types.Mixed,
     checks: {
         type: Array,
         required: false,
