@@ -31,7 +31,8 @@ module.exports = {
     checkOut,
     checkModify,
     getWorkedHoursUser,
-    getWorkedHoursAdmin
+    getWorkedHoursAdmin,
+    currentCheck
 }
 
 const _UPDATE_DEFAULT_CONFIG = {
@@ -116,6 +117,7 @@ async function refreshToken(req, res) {
  * @param {*} res Response
  */
 async function checkIn(req, res) {
+
     let loggedUser = req.user;
 
     user.findById(loggedUser._id, {}, { new: true })
@@ -181,6 +183,24 @@ async function checkOut(req, res) {
             console.log(err)
             return res.status(404).json({ message: 'User was not found', error: err })
         })
+
+}
+
+/**
+ * Get current check from logged User
+ * @param {request} req Request
+ * @param {*} res Response
+ */
+async function currentCheck(req, res) {
+    const loggedUser = req.user
+    user.findById(loggedUser._id).then(user => {
+        console.log(user);
+        if (user.currentCheck) {
+            return res.status(201).json(user.currentCheck)
+        } else {
+            return res.status(404).json({ message: 'No hay un fichaje en curso' })
+        }
+    })
 
 }
 
