@@ -31,7 +31,8 @@ module.exports = {
     checkOut,
     checkModify,
     getWorkedHoursUser,
-    getWorkedHoursAdmin
+    getWorkedHoursAdmin,
+    currentCheck
 }
 
 const _UPDATE_DEFAULT_CONFIG = {
@@ -116,6 +117,7 @@ async function refreshToken(req, res) {
  * @param {*} res Response
  */
 async function checkIn(req, res) {
+
     let loggedUser = req.user;
 
     user.findById(loggedUser._id, {}, { new: true })
@@ -185,6 +187,24 @@ async function checkOut(req, res) {
 }
 
 /**
+ * Get current check from logged User
+ * @param {request} req Request
+ * @param {*} res Response
+ */
+async function currentCheck(req, res) {
+    const loggedUser = req.user
+    user.findById(loggedUser._id).then(user => {
+        console.log(user);
+        if (user.currentCheck) {
+            return res.status(201).json(user.currentCheck)
+        } else {
+            return res.status(404).json({ message: 'No hay un fichaje en curso' })
+        }
+    })
+
+}
+
+/**
  * Update fields the check list
  * @param {request} req Request
  * @param {*} res Response
@@ -223,8 +243,11 @@ async function checkAll(req, res) {
 
     user.findById(loggedUser._id, { 'checks': 1 })
         .then(resultUser => {
-
-            return res.json(resultUser.checks.reverse())
+            if (resultUser.checks[0]) {
+                console.log(resultUser.checks);
+                return res.json(resultUser.checks.reverse())
+            }
+            return res.status(404).json({ message: 'No hay check-in para este usuario' })
         })
         .catch(err => {
             console.log(err)
@@ -255,7 +278,6 @@ async function userAll(req, res) {
  * @param {*} res Response
  */
 async function getUser(req, res) {
-
     user.findById(req.params.id)
         .then(resultUser => {
             return res.json(resultUser)
