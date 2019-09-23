@@ -223,8 +223,11 @@ async function checkAll(req, res) {
 
     user.findById(loggedUser._id, { 'checks': 1 })
         .then(resultUser => {
-
-            return res.json(resultUser.checks.reverse())
+            if (resultUser.checks[0]) {
+                console.log(resultUser.checks);
+                return res.json(resultUser.checks.reverse())
+            }
+            return res.status(404).json({ message: 'No hay check-in para este usuario' })
         })
         .catch(err => {
             console.log(err)
@@ -255,7 +258,6 @@ async function userAll(req, res) {
  * @param {*} res Response
  */
 async function getUser(req, res) {
-
     user.findById(req.params.id)
         .then(resultUser => {
             return res.json(resultUser)
