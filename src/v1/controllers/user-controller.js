@@ -120,7 +120,7 @@ async function checkIn(req, res) {
 
     let loggedUser = req.user;
 
-    user.findById(loggedUser._id, {}, { new: true })
+    user.findById(loggedUser._id, { currentCheck: 1 }, { new: true })
         .then(user => {
             if (!user.currentCheck) {
 
@@ -157,7 +157,7 @@ async function checkIn(req, res) {
 async function checkOut(req, res) {
     const loggedUser = req.user
 
-    user.findById(loggedUser._id, {}, { new: true })
+    user.findById(loggedUser._id, { currentCheck: 1, checks: 1 }, { new: true })
         .then(user => {
             if (user.currentCheck) {
                 let completedCheck = {
@@ -193,8 +193,7 @@ async function checkOut(req, res) {
  */
 async function currentCheck(req, res) {
     const loggedUser = req.user
-    user.findById(loggedUser._id).then(user => {
-        console.log(user);
+    user.findById(loggedUser._id, { currentCheck: 1 }).then(user => {
         if (user.currentCheck) {
             return res.status(201).json(user.currentCheck)
         } else {
@@ -244,7 +243,6 @@ async function checkAll(req, res) {
     user.findById(loggedUser._id, { 'checks': 1 })
         .then(resultUser => {
             if (resultUser.checks[0]) {
-                console.log(resultUser.checks);
                 return res.json(resultUser.checks.reverse())
             }
             return res.status(404).json({ message: 'No hay check-in para este usuario' })
@@ -261,8 +259,8 @@ async function checkAll(req, res) {
  * @param {*} res Response
  */
 async function userAll(req, res) {
-
-    user.find({}, { 'name': 1 })
+    var field = req.query.name ? { 'name': { '$regex': req.query.name } } : {}
+    user.find(field, { name: 1 })
         .then(resultUsers => {
             return res.json(resultUsers)
         })
