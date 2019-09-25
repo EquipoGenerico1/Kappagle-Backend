@@ -3,11 +3,6 @@ const user = require('../models/user-model')
 const authJWT = require('../helpers/jwt')
 
 /**
-<<<<<<< HEAD
- * POST     /api/login              -> login
- * POST     /api/signup             -> signup
- * POST     /api/refresh-token      -> refreshToken
-=======
  * POST     /api/login                  -> login
  * POST     /api/signup                 -> signup
  * POST     /api/refresh-token          -> refreshToken
@@ -21,7 +16,6 @@ const authJWT = require('../helpers/jwt')
  * POST     /users/checks/checkin       -> checkIn
  * PATCH    /users/checks/:id/checkout  -> checkOut
  * PATCH    /users/:user/checks/:check  -> checkModify
->>>>>>> develop
  */
 
 module.exports = {
@@ -50,7 +44,7 @@ const _UPDATE_DEFAULT_CONFIG = {
  * @param {*} res Response
  */
 async function login(req, res) {
-    console.log({ request: req });
+    console.log({ request: req.headers["x-forwarded-for"] });
     if (req.body.password && req.body.email) {
         user.findOne({
             email: req.body.email
