@@ -46,6 +46,7 @@ const _UPDATE_DEFAULT_CONFIG = {
  * @param {*} res Response
  */
 async function login(req, res) {
+    console.log(req.ip);
     if (req.body.password && req.body.email) {
         user.findOne({
             email: req.body.email
