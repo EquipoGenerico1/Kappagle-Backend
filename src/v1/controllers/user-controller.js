@@ -45,6 +45,9 @@ const _UPDATE_DEFAULT_CONFIG = {
  */
 async function login(req, res) {
     console.log({ request: req.headers["x-forwarded-for"] });
+    console.log("/////////////////////////////////////////////");
+    console.log(req.ip);
+
     if (req.body.password && req.body.email) {
         user.findOne({
             email: req.body.email
