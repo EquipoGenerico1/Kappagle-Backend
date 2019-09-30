@@ -1,9 +1,8 @@
 const router = require('express').Router()
 const userController = require('./controllers/user-controller')
 const auth = require('./middlewares/auth')
-const location = require('./middlewares/geolocation')
 
-router.post('/login', location.correctLocation, userController.login)
+router.post('/login', userController.login)
 router.post('/signup', userController.signup)
 router.post('/refresh-token', userController.refreshToken)
 

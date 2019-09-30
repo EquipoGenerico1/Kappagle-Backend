@@ -50,7 +50,7 @@ async function login(req, res) {
         user.findOne({
             email: req.body.email
         })
-            .select("_id password role")
+            .select("_id password role name email")
             .exec((err, userResult) => {
                 if (err || !userResult) {
                     return res.status(401).send({ error: "User does not exist" });
@@ -63,7 +63,12 @@ async function login(req, res) {
                             access_token: dataToken[0],
                             refresh_token: authJWT.createRefreshToken(userResult),
                             expires_in: dataToken[1],
-                            role: userResult.role
+                            role: userResult.role,
+                            user: {
+                                name: userResult.name,
+                                email: userResult.email,
+                                _id: userResult.id
+                            }
                         });
 
                     } else {
@@ -91,7 +96,12 @@ async function signup(req, res) {
                 access_token: dataToken[0],
                 refresh_token: authJWT.createRefreshToken(user),
                 expires_in: dataToken[1],
-                role: user.role
+                role: user.role,
+                user: {
+                    name: userResult.name,
+                    email: userResult.email,
+                    _id: userResult.id
+                }
             };
             return res.status(201).json(userResponse);
 
