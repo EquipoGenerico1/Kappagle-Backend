@@ -3,6 +3,11 @@ const moment = require('moment')
 const uniqid = require('uniqid')
 const user = require('../models/user-model')
 const authJWT = require('../helpers/jwt')
+const pdfTemplate = require('../helpers/pdf')
+const puppeteer = require('puppeteer')
+const onFinished = require('on-finished')
+const path = require('path')
+const fs = require('fs')
 
 /**
  * POST     /api/login                  -> login
@@ -13,7 +18,9 @@ const authJWT = require('../helpers/jwt')
  * GET      /users                      -> userAll
  * GET      /users/checks               -> checkAll
  * GET      /users/getWorkedHoursUser   -> getWorkedHoursUser
- * GET      /users/getWorkedHoursAdmin   -> getWorkedHoursAdmin
+ * GET      /users/getWorkedHoursAdmin  -> getWorkedHoursAdmin
+ * GET      /users/:id/pdf              -> getPdfAdmin
+ * GET      /users/pdf                  -> getPdfUser
  * 
  * POST     /users/checks/checkin       -> checkIn
  * PATCH    /users/checks/:id/checkout  -> checkOut
@@ -32,7 +39,9 @@ module.exports = {
     checkModify,
     getWorkedHoursUser,
     getWorkedHoursAdmin,
-    currentCheck
+    currentCheck,
+    getPdfAdmin,
+    getPdfUser,
 }
 
 const _UPDATE_DEFAULT_CONFIG = {
@@ -301,8 +310,7 @@ async function getChecksByRange(from, to, id) {
                 resolve(checks);
             })
             .catch(err => {
-                res.status(404).json({ message: 'User was not found', error: err });
-                reject();
+                reject("" + err);
             })
 
     });
@@ -355,3 +363,57 @@ async function getWorkedHoursAdmin(req, res) {
         return res.status(401).send({ error: "BadRequest" });
     }
 }
+
+async function generatePdf(filename, user, dateRange) {
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+
+    await page.setContent(pdfTemplate(user, dateRange));
+    await page.emulateMedia('screen');
+    await page.pdf({
+        path: filename,
+        format: 'A4',
+        printBackground: true
+    });
+
+    await browser.close();
+}
+
+function filterChecksByRange(from, to, checks) {
+    var fromUnix = moment(from, "DD-MM-YYYY").utc().unix();
+    var toUnix = moment(to, "DD-MM-YYYY").utc().unix();
+    return checks.filter(check => check.checkIn >= fromUnix && check.checkIn <= toUnix);
+}
+
+async function getPdf(req, res, userId) {
+    if (req.query.from && req.query.to && userId) {
+        user.findById(userId)
+            .then(async resultUser => {
+                resultUser.checks = filterChecksByRange(req.query.from, req.query.to, resultUser.checks);
+                var dir = path.resolve(__dirname + "/../documents");
+                if (!fs.existsSync(dir)) fs.mkdirSync(dir);
+                var filename = dir + "/" + resultUser._id + "-" + uniqid() + ".pdf";
+
+                try {
+                    await generatePdf(filename, resultUser, { from: req.query.from, to: req.query.to });
+                    if (fs.existsSync(filename)) {
+                        onFinished(res, (err, msg) => fs.unlinkSync(filename))
+                        res.status(201).sendFile(filename);
+                    } else {
+                        res.status(404).send({ error: "Resource doesn't exist" });
+                    }
+                } catch (err) {
+                    return res.status(400).json({ message: 'Operation failed', error: err });
+                }
+            })
+            .catch(err => {
+                console.log(err)
+                return res.status(404).json({ message: 'User was not found', error: err })
+            })
+    } else {
+        return res.status(401).send({ error: "BadRequest" });
+    }
+}
+
+function getPdfUser(req, res) { return getPdf(req, res, req.user._id); }
+function getPdfAdmin(req, res) { return getPdf(req, res, req.params.id); }

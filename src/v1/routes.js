@@ -12,9 +12,13 @@ router.post('/users/checks/checkin', auth.authUser, userController.checkIn)
 router.patch('/users/checks/checkout', auth.authUser, userController.checkOut)
 router.patch('/users/:user/checks/:check', auth.authAdmin, userController.checkModify)
 
+router.get('/users/:id/pdf', auth.authAdmin, userController.getPdfAdmin);
+router.get('/users/pdf', auth.authUser, userController.getPdfUser);
+
 router.get('/users/worked-hours', auth.authUser, userController.getWorkedHoursUser)
 router.get('/users/:id/worked-hours', auth.authAdmin, userController.getWorkedHoursAdmin)
 router.get('/users/:id', auth.authAdmin, userController.getUser)
 router.get('/users', auth.authAdmin, userController.userAll)
+
 
 module.exports = router
