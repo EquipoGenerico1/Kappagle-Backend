@@ -13,7 +13,7 @@ app.use(express.json());
 app.use(express.urlencoded());
 app.use('/api/v1', routerv1);
 
-mongoose.connect(process.env.MONGODB_URI + "/kappagle").then(res => {
+mongoose.connect(process.env.MONGODB_URI + "/kappagle", { useNewUrlParser: true }).then(res => {
     app.listen(process.env.PORT || 5000);
     console.log(`STARTING SERVER AT: localhost:${process.env.PORT || 5000}`);
 }).catch(err => {

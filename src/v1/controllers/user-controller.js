@@ -1,6 +1,4 @@
 //Imports
-const moment = require('moment')
-const uniqid = require('uniqid')
 const user = require('../models/user-model')
 const authJWT = require('../helpers/jwt')
 
@@ -27,6 +25,7 @@ module.exports = {
     getUser,
     userAll,
     checkAll,
+    checkAllFromId,
     checkIn,
     checkOut,
     checkModify,
@@ -46,11 +45,12 @@ const _UPDATE_DEFAULT_CONFIG = {
  * @param {*} res Response
  */
 async function login(req, res) {
+
     if (req.body.password && req.body.email) {
         user.findOne({
             email: req.body.email
         })
-            .select("_id password role")
+            .select("_id password role name email")
             .exec((err, userResult) => {
                 if (err || !userResult) {
                     return res.status(401).send({ error: "User does not exist" });
@@ -63,7 +63,12 @@ async function login(req, res) {
                             access_token: dataToken[0],
                             refresh_token: authJWT.createRefreshToken(userResult),
                             expires_in: dataToken[1],
-                            role: userResult.role
+                            role: userResult.role,
+                            user: {
+                                name: userResult.name,
+                                email: userResult.email,
+                                _id: userResult.id
+                            }
                         });
 
                     } else {
@@ -91,7 +96,12 @@ async function signup(req, res) {
                 access_token: dataToken[0],
                 refresh_token: authJWT.createRefreshToken(user),
                 expires_in: dataToken[1],
-                role: user.role
+                role: user.role,
+                user: {
+                    name: userResult.name,
+                    email: userResult.email,
+                    _id: userResult.id
+                }
             };
             return res.status(201).json(userResponse);
 
@@ -241,6 +251,26 @@ async function checkAll(req, res) {
     let loggedUser = req.user
 
     user.findById(loggedUser._id, { 'checks': 1 })
+        .then(resultUser => {
+            if (resultUser.checks[0]) {
+                return res.json(resultUser.checks.reverse())
+            }
+            return res.status(404).json({ message: 'No hay check-in para este usuario' })
+        })
+        .catch(err => {
+            console.log(err)
+            return res.status(404).json({ message: 'Users was not found', error: err })
+        })
+}
+
+/**
+ * Get all checks list the user
+ * @param {request} req Request
+ * @param {*} res Response
+ */
+async function checkAllFromId(req, res) {
+
+    user.findById(req.params.id, { 'checks': 1 })
         .then(resultUser => {
             if (resultUser.checks[0]) {
                 return res.json(resultUser.checks.reverse())
