@@ -1,13 +1,15 @@
 const router = require('express').Router()
 const userController = require('./controllers/user-controller')
 const auth = require('./middlewares/auth')
+const location = require('./middlewares/geolocation')
 
-router.post('/login', userController.login)
+router.post('/login', location.correctLocation, userController.login)
 router.post('/signup', userController.signup)
 router.post('/refresh-token', userController.refreshToken)
 
 router.get('/users/checks/current-check', auth.authUser, userController.currentCheck)
 router.get('/users/checks', auth.authUser, userController.checkAll)
+router.get('/users/:id/checks', auth.authAdmin, userController.checkAllFromId)
 router.post('/users/checks/checkin', auth.authUser, userController.checkIn)
 router.patch('/users/checks/checkout', auth.authUser, userController.checkOut)
 router.patch('/users/:user/checks/:check', auth.authAdmin, userController.checkModify)

@@ -25,6 +25,7 @@ module.exports = {
     getUser,
     userAll,
     checkAll,
+    checkAllFromId,
     checkIn,
     checkOut,
     checkModify,
@@ -44,9 +45,6 @@ const _UPDATE_DEFAULT_CONFIG = {
  * @param {*} res Response
  */
 async function login(req, res) {
-    console.log({ request: req.headers["x-forwarded-for"] });
-    console.log("/////////////////////////////////////////////");
-    console.log(req.ip);
 
     if (req.body.password && req.body.email) {
         user.findOne({
@@ -243,6 +241,26 @@ async function checkAll(req, res) {
     let loggedUser = req.user
 
     user.findById(loggedUser._id, { 'checks': 1 })
+        .then(resultUser => {
+            if (resultUser.checks[0]) {
+                return res.json(resultUser.checks.reverse())
+            }
+            return res.status(404).json({ message: 'No hay check-in para este usuario' })
+        })
+        .catch(err => {
+            console.log(err)
+            return res.status(404).json({ message: 'Users was not found', error: err })
+        })
+}
+
+/**
+ * Get all checks list the user
+ * @param {request} req Request
+ * @param {*} res Response
+ */
+async function checkAllFromId(req, res) {
+
+    user.findById(req.params.id, { 'checks': 1 })
         .then(resultUser => {
             if (resultUser.checks[0]) {
                 return res.json(resultUser.checks.reverse())
