@@ -1,6 +1,8 @@
 //Imports
 const user = require('../models/user-model')
 const authJWT = require('../helpers/jwt')
+const moment = require('../../../node_modules/moment')
+const uniqid = require('../../../node_modules/uniqid')
 
 /**
  * POST     /api/login                  -> login
@@ -133,7 +135,6 @@ async function checkIn(req, res) {
     user.findById(loggedUser._id, { currentCheck: 1 }, { new: true })
         .then(user => {
             if (!user.currentCheck) {
-
                 user.currentCheck = {
                     checkIn: moment().utc().unix(),
                     checkOut: null,
