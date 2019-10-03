@@ -201,7 +201,7 @@ async function checkOut(req, res) {
                     if (err) {
                         return res.status(404).json({ message: 'Check out was not possible', error: err })
                     } else {
-                        return res.status(201).json(product.checks.filter(check => check._id == completedCheck._id))
+                        return res.status(201).json(product.checks.filter(check => check._id == completedCheck._id)[0])
                     }
                 })
             } else {
