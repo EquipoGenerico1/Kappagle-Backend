@@ -1,4 +1,6 @@
 //Imports
+const moment = require('moment')
+const uniqid = require('uniqid')
 const user = require('../models/user-model')
 const authJWT = require('../helpers/jwt')
 const pdfTemplate = require('../helpers/pdf')
@@ -139,26 +141,32 @@ async function checkIn(req, res) {
 
     let loggedUser = req.user;
 
-    user.findById(loggedUser._id, { currentCheck: 1 }, { new: true })
+    user.findById(loggedUser._id, { currentCheck: 1, lastCheckOut: 1 }, { new: true })
         .then(user => {
-            if (!user.currentCheck) {
+            let checkIn = moment().utc().unix();
+            let timeTillNewCheck = user.lastCheckOut + 60 //This avoids checkin spaming
+            if (timeTillNewCheck < checkIn) {
+                if (!user.currentCheck) {
 
-                user.currentCheck = {
-                    checkIn: moment().utc().unix(),
-                    checkOut: null,
-                    _id: uniqid()
-                };
+                    user.currentCheck = {
+                        checkIn: checkIn,
+                        checkOut: null,
+                        _id: uniqid()
+                    };
 
-                user.markModified('currentCheck');
-                user.save(function (err, product) {
-                    if (err) {
-                        return res.status(404).json({ message: 'Check In was not possible', error: err })
-                    } else {
-                        return res.status(201).json(product.currentCheck)
-                    }
-                })
+                    user.markModified('currentCheck');
+                    user.save(function (err, product) {
+                        if (err) {
+                            return res.status(404).json({ message: 'Check In was not possible', error: err })
+                        } else {
+                            return res.status(201).json(product.currentCheck)
+                        }
+                    })
+                } else {
+                    return res.status(404).json({ message: 'You have already checked in, please check out first' })
+                }
             } else {
-                return res.status(404).json({ message: 'You have already checked in, please check out first' })
+                return res.status(404).json({ message: 'Wait ' + (timeTillNewCheck - checkIn) + 's until checking in again' })
             }
         })
         .catch(err => {
@@ -176,16 +184,18 @@ async function checkIn(req, res) {
 async function checkOut(req, res) {
     const loggedUser = req.user
 
-    user.findById(loggedUser._id, { currentCheck: 1, checks: 1 }, { new: true })
+    user.findById(loggedUser._id, { currentCheck: 1, lastCheckOut: 1, checks: 1 }, { new: true })
         .then(user => {
             if (user.currentCheck) {
+                let checkOut = moment().utc().unix();
                 let completedCheck = {
                     checkIn: user.currentCheck.checkIn,
-                    checkOut: moment().utc().unix(),
+                    checkOut: checkOut,
                     _id: user.currentCheck._id
                 }
                 user.checks.push(completedCheck);
                 user.currentCheck = undefined;
+                user.lastCheckOut = checkOut;
                 user.markModified('currentCheck');
                 user.save(function (err, product) {
                     if (err) {
