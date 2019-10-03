@@ -10,10 +10,10 @@ const cors = require('cors');
 
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({extended: true}));
+app.use(express.urlencoded());
 app.use('/public',express.static('./src/public'));
 app.use('/api/v1', routerv1);
-console.log(__dirname + '/public')
+
 mongoose.connect(process.env.MONGODB_URI + "/kappagle", { useNewUrlParser: true }).then(res => {
     app.listen(process.env.PORT || 5000);
     console.log(`STARTING SERVER AT: localhost:${process.env.PORT || 5000}`);

@@ -331,7 +331,7 @@ async function getUser(req, res) {
 }
 
 /**
- * Get user by TOKEN
+ * Get data user
  * @param {request} req Request
  * @param {*} res Response
  */
@@ -347,6 +347,11 @@ async function getMyProfile(req, res) {
         })
 }
 
+/**
+ * Update fields for user
+ * @param {request} req Request
+ * @param {*} res Response
+ */
 async function updateMyProfile(req, res) {
     const loggedUser = req.user;
     user.findByIdAndUpdate(loggedUser._id, 
@@ -367,6 +372,11 @@ async function updateMyProfile(req, res) {
         })
 }
 
+/**
+ * Save image for user
+ * @param {request} req Request
+ * @param {*} res Response
+ */
 async function savePhotoProfile(req, res) {
     
     let image = req.file.filename;
@@ -416,6 +426,11 @@ async function savePhotoProfile(req, res) {
     }
 }
 
+/**
+ * Remove image user
+ * @param {request} req Request
+ * @param {*} res Response
+ */
 async function removeImageUser(image) {
     const dir = path.join(__dirname,"../../public/images/");
     
@@ -425,6 +440,11 @@ async function removeImageUser(image) {
     return;
 }
 
+/**
+ * Get checks by range
+ * @param {request} req Request
+ * @param {*} res Response
+ */
 async function getChecksByRange(from, to, id) {
     from = moment(from, "DD-MM-YYYY").utc().unix();
     to = moment(to, "DD-MM-YYYY").utc().unix();
