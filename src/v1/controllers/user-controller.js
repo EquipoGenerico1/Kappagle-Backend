@@ -109,9 +109,9 @@ async function signup(req, res) {
                 expires_in: dataToken[1],
                 role: user.role,
                 user: {
-                    name: userResult.name,
-                    email: userResult.email,
-                    _id: userResult.id
+                    name: user.name,
+                    email: user.email,
+                    _id: user.id
                 }
             };
             return res.status(201).json(userResponse);
