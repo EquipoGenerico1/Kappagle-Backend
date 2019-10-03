@@ -6,12 +6,14 @@ const puppeteer = require('puppeteer')
 const onFinished = require('on-finished')
 const path = require('path')
 const fs = require('fs')
+const sharp = require('sharp')
 
 /**
  * POST     /api/login                  -> login
  * POST     /api/signup                 -> signup
  * POST     /api/refresh-token          -> refreshToken
  * 
+ * GET      /users/profile              -> getMyProfile
  * GET      /users:id                   -> getUser
  * GET      /users                      -> userAll
  * GET      /users/checks               -> checkAll
@@ -29,7 +31,10 @@ module.exports = {
     login,
     signup,
     refreshToken,
+    getMyProfile,
     getUser,
+    savePhotoProfile,
+    updateMyProfile,
     userAll,
     checkAll,
     checkAllFromId,
@@ -323,6 +328,101 @@ async function getUser(req, res) {
             console.log(err)
             return res.status(404).json({ message: 'User was not found', error: err })
         })
+}
+
+/**
+ * Get user by TOKEN
+ * @param {request} req Request
+ * @param {*} res Response
+ */
+async function getMyProfile(req, res) {
+    const loggedUser = req.user;
+    user.findById(loggedUser._id, { 'name': 1, 'nameImage': 1})
+        .then(resultUser => {
+            return res.json(resultUser)
+        })
+        .catch(err => {
+            console.log(err)
+            return res.status(404).json({ message: 'User was not found', error: err })
+        })
+}
+
+async function updateMyProfile(req, res) {
+    const loggedUser = req.user;
+    user.findByIdAndUpdate(loggedUser._id, 
+        {
+        $set: {
+            [req.body.field]: req.body.newData
+            }
+        },
+        {
+            new: true
+        })
+        .then(resultUser => {
+            return res.json(resultUser)
+        })
+        .catch(err => {
+            console.log(err)
+            return res.status(404).json({ message: 'User was not found', error: err })
+        })
+}
+
+async function savePhotoProfile(req, res) {
+    
+    let image = req.file.filename;
+
+    if(req.file) {
+        const loggedUser = req.user;
+        user.findByIdAndUpdate(loggedUser._id,
+            {
+            $set: {
+                nameImage: image
+                }
+            })
+            .then(resultUser => {
+
+                removeImageUser(resultUser.nameImage);
+
+                const dir = path.join(__dirname,"../../public/images/");
+
+                if(image != null && fs.existsSync(dir + image)){
+                    sharp(dir + image)
+                        .resize({
+                            width: 160,
+                            height: 160,
+                            fit: sharp.fit.cover,
+                            position: sharp.strategy.entropy
+                        })
+                        .toBuffer()
+                        .then( data => {
+                            fs.writeFileSync(dir + image, data);
+                            return res.json(image);
+                        })
+                        .catch( err => {
+                            return res.status(500).json({ message: 'Error image', error: err })
+                        });	
+            
+                }else{
+                    return res.status(404).json({ message: 'Image not found', error: err })
+                }
+             
+            })
+            .catch(err => {
+                console.log(err)
+                return res.status(404).json({ message: 'User was not found', error: err })
+            })
+    }else {
+        return res.status(404).json({ message: 'Image was not found'});
+    }
+}
+
+async function removeImageUser(image) {
+    const dir = path.join(__dirname,"../../public/images/");
+    
+    if(image!=null && fs.existsSync(dir + image)){
+        fs.unlink(dir + image, (err) => {})
+    }
+    return;
 }
 
 async function getChecksByRange(from, to, id) {

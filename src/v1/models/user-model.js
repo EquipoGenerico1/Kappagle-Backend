@@ -36,6 +36,11 @@ const UserSchema = mongoose.Schema({
         type: Array,
         required: false,
         default: []
+    },
+    nameImage: {
+        type: String,
+        required: false,
+        default: null
     }
 })
 
