@@ -36,7 +36,6 @@ function refreshToken(req, res) {
                     error: "TokenExpired"
                 })
             }
-
             User.findOne({
                 _id: data.sub,
             }, (err, user) => {

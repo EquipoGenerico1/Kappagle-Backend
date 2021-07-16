@@ -15,6 +15,7 @@ passport.use('user', new JwtStrategy({
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
     secretOrKey: process.env.SECRET_TOKEN,
 }, async (payload, done) => {
+
     try {
         const user = await User.findOne({
             _id: payload.id
@@ -26,6 +27,7 @@ passport.use('user', new JwtStrategy({
 
         done(null, user)
     } catch (error) {
+
         done(error, false)
     }
 }))

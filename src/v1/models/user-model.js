@@ -31,6 +31,12 @@ const UserSchema = mongoose.Schema({
         ],
         required: true
     },
+    currentCheck: mongoose.Schema.Types.Mixed,
+    lastCheckOut: {
+        type: Number,
+        required: true,
+        default: 0
+    },
     checks: {
         type: Array,
         required: false,
